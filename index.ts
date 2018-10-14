@@ -1,12 +1,12 @@
 const API_URL = 'https://kenkoooo.com/atcoder/atcoder-api';
-const CONTEST_NAME = 'ARC';
+const CONTEST_NAMES = ['ARC', 'AGC'];
 
-const fetchUserAPI = (userName: string) => {
+const fetchUserAPI = (userName: string, contestName: string) => {
     const response = UrlFetchApp.fetch(`${API_URL}/results?user=${userName}`);
 
     return JSON.parse(response.getContentText())
         .filter(submit => submit.result === 'AC')
-        .filter(submit => submit.contest_id.substr(0, 3) === CONTEST_NAME.toLowerCase());
+        .filter(submit => submit.contest_id.substr(0, contestName.length) === contestName.toLowerCase());
 };
 
 const fetchProblemAPI = () => {
@@ -23,8 +23,13 @@ const fetchProblemAPI = () => {
 const findRow = (sheet: Sheet, contestName: string) => {
     const offset = sheet.getFrozenRows() + 1;
     const size = sheet.getLastRow() - offset + 1;
+
+    if (size <= 0) {
+        return offset - 1;
+    }
+
     const values = sheet.getRange(offset, 1, size, 1).getValues();
-    let l = 0;
+    let l = -1;
     let u = size;
 
     while (u - l > 1) {
@@ -82,14 +87,16 @@ const updateRow = (sheet: Sheet, submission, problemTitle: string) => {
 
 function main() {
     const scriptProperties = PropertiesService.getScriptProperties();
-
     const contestantName = scriptProperties.getProperty('contestantName');
-    const acSubmissions = fetchUserAPI(contestantName);
-    const problemTitleDictionary = fetchProblemAPI();
-
     const spreadsheetId = scriptProperties.getProperty('spreadsheetId');
     const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-    const sheet = spreadsheet.getSheetByName(CONTEST_NAME);
 
-    acSubmissions.forEach((submission) => updateRow(sheet, submission, problemTitleDictionary[submission.problem_id]));
+    const problemTitleDictionary = fetchProblemAPI();
+
+    CONTEST_NAMES.forEach(contestName => {
+        const acSubmissions = fetchUserAPI(contestantName, contestName);
+        const sheet = spreadsheet.getSheetByName(contestName);
+
+        acSubmissions.forEach((submission) => updateRow(sheet, submission, problemTitleDictionary[submission.problem_id]));
+    });
 }
