@@ -1,0 +1,41 @@
+{
+  "name": "arc-spreadsheet-manager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "tsc": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blue-jam/arc-spreadsheet-manager.git"
+  },
+  "author": "blue-jam",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blue-jam/arc-spreadsheet-manager/issues"
+  },
+  "homepage": "https://github.com/blue-jam/arc-spreadsheet-manager#readme",
+  "devDependencies": {
+    "@types/google-apps-script": "0.0.29",
+    "@types/jest": "^23.3.5",
+    "jest": "^23.6.0",
+    "ts-jest": "^23.10.4",
+    "typescript": "^3.1.3"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
+  }
+}

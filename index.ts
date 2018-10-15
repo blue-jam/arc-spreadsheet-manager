@@ -1,19 +1,32 @@
+import Sheet = GoogleAppsScript.Spreadsheet.Sheet;
+
 const API_URL = 'https://kenkoooo.com/atcoder/atcoder-api';
 const CONTEST_NAMES = ['ARC', 'AGC'];
 
-const fetchUserAPI = (userName: string, contestName: string) => {
+interface Submission {
+    result: string,
+    contest_id: string,
+    problem_id: string,
+}
+
+interface Problem {
+    id: string,
+    title: string,
+}
+
+const fetchUserAPI = (userName: string, contestName: string): Submission[] => {
     const response = UrlFetchApp.fetch(`${API_URL}/results?user=${userName}`);
 
     return JSON.parse(response.getContentText())
-        .filter(submit => submit.result === 'AC')
-        .filter(submit => submit.contest_id.substr(0, contestName.length) === contestName.toLowerCase());
+        .filter((submit: Submission) => submit.result === 'AC')
+        .filter((submit: Submission) => submit.contest_id.substr(0, contestName.length) === contestName.toLowerCase());
 };
 
 const fetchProblemAPI = () => {
     const response = UrlFetchApp.fetch(`${API_URL}/info/problems`);
 
-    const result = {};
-    JSON.parse(response.getContentText()).forEach((problem) => {
+    const result: any = {};
+    JSON.parse(response.getContentText()).forEach((problem: Problem) => {
         result[problem.id] = problem.title;
     });
 
@@ -67,16 +80,20 @@ const getProblemNumberFromId = (problemId: string) => {
     }
 };
 
-const updateRow = (sheet: Sheet, submission, problemTitle: string) => {
+const updateRow = (sheet: Sheet, submission: Submission, problemTitle: string) => {
     let row = findRow(sheet, submission.contest_id.toUpperCase());
 
-    if (sheet.getRange(row, 1).getValue().toLowerCase() !== submission.contest_id) {
+    if ((sheet.getRange(row, 1).getValue() as string).toLowerCase() !== submission.contest_id) {
         sheet.insertRowAfter(row);
         row++;
-        const cell = sheet.getRange(row, 1).setValue(submission.contest_id.toUpperCase());
+        sheet.getRange(row, 1).setValue(submission.contest_id.toUpperCase());
     }
 
     const problemNumber = getProblemNumberFromId(submission.problem_id);
+    if (typeof problemNumber === 'undefined') {
+        return;
+    }
+
     const problemCell = sheet.getRange(row, problemNumber * 2);
 
     if (typeof problemCell !== 'undefined' && problemCell.isBlank()) {
@@ -88,7 +105,15 @@ const updateRow = (sheet: Sheet, submission, problemTitle: string) => {
 function main() {
     const scriptProperties = PropertiesService.getScriptProperties();
     const contestantName = scriptProperties.getProperty('contestantName');
+    if (contestantName === null) {
+        throw new Error('Failed to load contestantName from a script configuration.');
+    }
+
     const spreadsheetId = scriptProperties.getProperty('spreadsheetId');
+    if (spreadsheetId === null) {
+        throw new Error('Failed to load spreadsheetId from a script configuration.');
+    }
+
     const spreadsheet = SpreadsheetApp.openById(spreadsheetId);
 
     const problemTitleDictionary = fetchProblemAPI();
